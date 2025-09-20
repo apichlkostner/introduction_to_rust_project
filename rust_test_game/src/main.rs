@@ -1,4 +1,4 @@
-use opengl_wrapper::ffi;
+use game_engine::ffi;
 
 fn main() {
     ffi::rust_create_game_window("My game", 500, 500);

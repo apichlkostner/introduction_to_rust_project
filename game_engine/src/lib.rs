@@ -1,8 +1,8 @@
 pub mod ffi;
-use std::time::{Duration, Instant};
 
 #[cfg(test)]
 mod tests {
+    use std::time::{Duration, Instant};
     use super::*; // lets you test items defined in lib.rs
 
     #[test]

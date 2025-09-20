@@ -4,12 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [lib]
-name = "opengl_wrapper"
-path = "src/lib.rs"
-
-[[bin]]
 name = "game_engine"
-path = "src/main.rs"
+path = "src/lib.rs"
 
 [dependencies]
 
