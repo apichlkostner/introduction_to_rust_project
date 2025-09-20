@@ -1,62 +1,57 @@
 pub mod ffi;
+#[macro_use]
+pub mod macros;
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use std::time::{Duration, Instant};
-    use super::*; // lets you test items defined in lib.rs
 
     #[test]
     #[ignore]
     fn test_simple_game_loop() {
-        ffi::rust_create_game_window("Test game", 800, 600);
-
-        while !ffi::rust_window_should_close() {
-            ffi::rust_update_game_window();
-            std::thread::sleep(Duration::from_millis(50));
-        }
+        start_window_and_game_loop!(|| {}, || {});
     }
 
     #[test]
     #[ignore]
     fn test_sprite_rendering() {
-        ffi::rust_create_game_window("Test game", 800, 600);
-        let sprite1 = ffi::rust_create_sprite(100.0, 100.0, 100, 100, 255, 0, 0);
-
-        while !ffi::rust_window_should_close() {
-            ffi::rust_render_sprite(sprite1);
-            ffi::rust_update_game_window();
-            std::thread::sleep(Duration::from_millis(50));
-        }
+        start_window_and_game_loop!(
+            || {
+                spawn_sprite!(100.0, 100.0, 100, 100, 255, 0, 0);
+            },
+            || {}
+        );
     }
 
     #[test]
     #[ignore]
     fn test_screen_clearing() {
-        ffi::rust_create_game_window("Test game", 800, 600);
         let sprite1 = ffi::rust_create_sprite(100.0, 100.0, 100, 100, 255, 0, 0);
         let sprite2 = ffi::rust_create_sprite(300.0, 300.0, 100, 100, 0, 0, 255);
 
         let start = Instant::now();
         let mut window_cleared = false;
 
-        while !ffi::rust_window_should_close() {
-            let elapsed = start.elapsed();
-            let cond = elapsed < Duration::from_secs(2);
+        start_window_and_game_loop!(
+            || {
+                let elapsed = start.elapsed();
+                let cond = elapsed < Duration::from_secs(2);
 
-            if cond {
-                ffi::rust_render_sprite(sprite1);
-                ffi::rust_update_game_window();
-            } else {
-                if !window_cleared {
-                    ffi::rust_clear_screen();
-                    window_cleared = true;
+                if cond {
+                    ffi::rust_render_sprite(sprite1);
+                    tick!();
+                } else {
+                    if !window_cleared {
+                        ffi::rust_clear_screen();
+                        window_cleared = true;
+                    }
+                    ffi::rust_render_sprite(sprite2);
+                    tick!();
                 }
-                ffi::rust_render_sprite(sprite2);
-                ffi::rust_update_game_window();
-            }
-
-            std::thread::sleep(Duration::from_millis(50));
-        }
+            },
+            || {}
+        );
     }
 
     #[test]
@@ -80,11 +75,10 @@ mod tests {
         ) -> bool {
             let mut result = false;
             for (key, pressed) in keys_pressed.iter_mut() {
-                let current_key_state = ffi::rust_get_key(window, *key);
-                if !*pressed && current_key_state == ffi::GLFW_PRESS {
+                on_key_press!(window, *key, || {
                     *pressed = true;
                     result = true;
-                }
+                });
             }
             result
         }
@@ -104,7 +98,7 @@ mod tests {
             if render {
                 ffi::rust_render_sprite(sprite1);
             }
-            ffi::rust_update_game_window();
+            tick!();
 
             if check_all_keys_pressed(&keys_pressed) {
                 return;
@@ -115,9 +109,6 @@ mod tests {
     #[test]
     #[ignore]
     fn test_sprite_position_update() {
-        ffi::rust_create_game_window("My game", 500, 500);
-        let sprite1 = ffi::rust_create_sprite(100.0, 100.0, 100, 100, 255, 0, 0);
-
         let mut x = -100.0;
         let mut y = -100.0;
 
@@ -128,14 +119,15 @@ mod tests {
             )
         }
 
-        while !ffi::rust_window_should_close() {
-            (x, y) = move_pos(x, y);
+        let sprite1 = spawn_sprite!(100.0, 100.0, 100, 100, 255, 0, 0);
 
-            ffi::rust_update_sprite_position(sprite1, x, y);
-            ffi::rust_clear_screen();
-            ffi::rust_render_sprite(sprite1);
-            ffi::rust_update_game_window();
-            std::thread::sleep(Duration::from_millis(20));
-        }
+        start_window_and_game_loop!("My game", 500, 500,
+            || {
+                (x, y) = move_pos(x, y);
+
+                move_sprite!(sprite1, x, y, true);
+            },
+            || {}
+        );
     }
 }
