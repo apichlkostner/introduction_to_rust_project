@@ -1,9 +1,4 @@
-//use core::time;
-//use std::thread;
-
-use std::slice::Windows;
-
-mod ffi;
+use opengl_wrapper::ffi;
 
 fn main() {
     ffi::rust_create_game_window("My game", 500, 500);
@@ -13,16 +8,15 @@ fn main() {
     let mut x = -100.0;
     let mut y = -100.0;
     let window = ffi::rust_get_window();
-    let mut render_second = false;
 
     while !ffi::rust_window_should_close() {
         (x, y) = move_pos(x, y);
-        render_second = second_sprite_render(window);
+        let render_second = second_sprite_render(window);
 
         ffi::rust_update_sprite_position(sprite1, x, y);
         ffi::rust_clear_screen();
         ffi::rust_render_sprite(sprite1);
-        if (render_second) {
+        if render_second {
             ffi::rust_render_sprite(sprite2);
         }
         ffi::rust_update_game_window();
@@ -39,5 +33,5 @@ fn move_pos(x: f32, y: f32) -> (f32, f32) {
 fn second_sprite_render(window: *mut ffi::GLFWwindow) -> bool {
     let current_key_state = ffi::rust_get_key(window, ffi::GLFW_KEY_SPACE);
 
-    current_key_state == 1
+    current_key_state == ffi::GLFW_PRESS
 }
