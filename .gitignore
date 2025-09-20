@@ -1,0 +1,17 @@
+# IDEs and editors
+.idea/
+.vscode/
+*.iml
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# By default Rust Analyzer uses target/ but if you change that:
+.rustc_info.json
+
+# Logs
+*.log
+
+# C library build output
+c_output
