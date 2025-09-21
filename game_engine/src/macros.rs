@@ -10,8 +10,8 @@ macro_rules! spawn_sprite {
 #[macro_export]
 macro_rules! move_sprite {
     ($sprite:expr, $x:expr, $y:expr) => {
-        let sprite = ffi::update_sprite_position($sprite, $x, $x);
-        ffi::rust_render_sprite(sprite);
+        ffi::rust_update_sprite_position($sprite, $x, $x);
+        ffi::rust_render_sprite($sprite);
     };
     ($sprite:expr, $x:expr, $y:expr, $clear:expr) => {
         if $clear {
@@ -26,7 +26,7 @@ macro_rules! move_sprite {
 macro_rules! tick {
     () => {
         ffi::rust_update_game_window();
-        std::thread::sleep(Duration::from_millis(20));
+        std::thread::sleep(std::time::Duration::from_millis(20));
     };
 }
 
@@ -54,7 +54,7 @@ macro_rules! start_window_and_game_loop {
         let run = true;
 
         while run && !ffi::rust_window_should_close() {
-            $operation_start();            
+            $operation_start();
             tick!();
             $operation_end();
         }

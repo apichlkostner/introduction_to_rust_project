@@ -1,11 +1,11 @@
 pub mod ffi;
+pub use ffi::*;
 #[macro_use]
 pub mod macros;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::{Duration, Instant};
 
     #[test]
     #[ignore]
@@ -30,13 +30,13 @@ mod tests {
         let sprite1 = ffi::rust_create_sprite(100.0, 100.0, 100, 100, 255, 0, 0);
         let sprite2 = ffi::rust_create_sprite(300.0, 300.0, 100, 100, 0, 0, 255);
 
-        let start = Instant::now();
+        let start = std::time::Instant::now();
         let mut window_cleared = false;
 
         start_window_and_game_loop!(
             {
                 let elapsed = start.elapsed();
-                let cond = elapsed < Duration::from_secs(2);
+                let cond = elapsed < std::time::Duration::from_secs(2);
 
                 if cond {
                     ffi::rust_render_sprite(sprite1);
