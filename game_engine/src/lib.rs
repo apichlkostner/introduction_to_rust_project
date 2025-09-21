@@ -57,53 +57,64 @@ mod tests {
     #[test]
     #[ignore]
     fn test_key_presses() {
-        ffi::rust_create_game_window("My game", 500, 500);
-        let sprite1 = ffi::rust_create_sprite(100.0, 100.0, 100, 100, 255, 0, 0);
-        let window = ffi::rust_get_window();
-
-        let mut keys_pressed: [(i32, bool); 5] = [
-            (ffi::GLFW_KEY_SPACE, false),
-            (ffi::GLFW_KEY_RIGHT, false),
-            (ffi::GLFW_KEY_LEFT, false),
-            (ffi::GLFW_KEY_DOWN, false),
-            (ffi::GLFW_KEY_UP, false),
-        ];
-
-        fn check_key_pressed(
-            window: *mut ffi::GLFWwindow,
-            keys_pressed: &mut [(i32, bool)],
-        ) -> bool {
-            let mut result = false;
-            for (key, pressed) in keys_pressed.iter_mut() {
-                on_key_press!(window, *key, || {
-                    *pressed = true;
-                    result = true;
-                });
-            }
-            result
+        struct Game {
+            sprite: *mut ffi::Sprite,
+            keys_pressed: [(i32, bool); 5],
         }
 
-        fn check_all_keys_pressed(keys_pressed: &[(i32, bool)]) -> bool {
-            for &(_, pressed) in keys_pressed {
-                if !pressed {
-                    return false;
+        impl Game {
+            fn new() -> Self {
+                Self {
+                    sprite: ffi::rust_create_sprite(100.0, 100.0, 100, 100, 255, 0, 0),
+                    keys_pressed: [
+                        (ffi::GLFW_KEY_SPACE, false),
+                        (ffi::GLFW_KEY_RIGHT, false),
+                        (ffi::GLFW_KEY_LEFT, false),
+                        (ffi::GLFW_KEY_DOWN, false),
+                        (ffi::GLFW_KEY_UP, false),
+                    ],
                 }
             }
-            true
+
+            fn check_key_pressed(&mut self) -> bool {
+                let mut result = false;
+                for (key, pressed) in self.keys_pressed.iter_mut() {
+                    on_key_press!(ffi::rust_get_window(), *key, || {
+                        *pressed = true;
+                        result = true;
+                    });
+                }
+                result
+            }
+
+            fn check_all_keys_pressed(&self) -> bool {
+                for (_, pressed) in self.keys_pressed {
+                    if !pressed {
+                        return false;
+                    }
+                }
+                true
+            }
+
+            fn game_loop_start(&mut self) {
+                let render = self.check_key_pressed();
+                ffi::rust_clear_screen();
+                if render {
+                    ffi::rust_render_sprite(self.sprite);
+                }
+            }
+
+            fn game_loop_end(&mut self) -> bool {
+                if self.check_all_keys_pressed() {
+                    return false;
+                }
+                true
+            }
         }
 
-        while !ffi::rust_window_should_close() {
-            let render = check_key_pressed(window, &mut keys_pressed);
-            ffi::rust_clear_screen();
-            if render {
-                ffi::rust_render_sprite(sprite1);
-            }
-            tick!();
+        let mut game = Game::new();
 
-            if check_all_keys_pressed(&keys_pressed) {
-                return;
-            }
-        }
+        start_window_and_game_loop!(game);
     }
 
     #[test]
@@ -121,7 +132,10 @@ mod tests {
 
         let sprite1 = spawn_sprite!(100.0, 100.0, 100, 100, 255, 0, 0);
 
-        start_window_and_game_loop!("My game", 500, 500,
+        start_window_and_game_loop!(
+            "My game",
+            500,
+            500,
             || {
                 (x, y) = move_pos(x, y);
 
