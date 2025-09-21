@@ -8,3 +8,7 @@ game_engine = { path = "../game_engine" }
 reqwest = { version = "0", features = ["blocking"] }
 serde = "1"
 serde_json = "1"
+crossbeam-channel = "0"
+log ="0"
+fern = "0"
+chrono = "0"
