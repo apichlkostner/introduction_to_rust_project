@@ -1,3 +1,5 @@
+use crate::sprite_creator;
+use crate::sprite_data::SpriteData;
 use game_engine::*;
 
 pub struct Pos {
@@ -5,38 +7,53 @@ pub struct Pos {
     y: f32,
 }
 
+pub struct Sprite {
+    c_sprite: *mut ffi::Sprite,
+    //pos: Pos,
+}
+
 pub struct Game {
-    sprite: *mut ffi::Sprite,
-    sprite_pos: Pos,
+    sprites: Vec<Sprite>,
 }
 
 impl Game {
     pub fn new() -> Self {
         Self {
-            sprite: spawn_sprite!(100.0, 100.0, 100, 100, 255, 0, 0),
-            sprite_pos: Pos {
-                x: -100.0,
-                y: -100.0,
-            },
+            sprites: Vec::new(),
         }
     }
 
-    fn update_pos(&mut self) {
-        if self.sprite_pos.x < 500.0 {
-            self.sprite_pos.x += 1.0
-        } else {
-            self.sprite_pos.x = -100.0
-        }
-        if self.sprite_pos.y < 500.0 {
-            self.sprite_pos.y += 1.0
-        } else {
-            self.sprite_pos.y = -100.0
+    fn spawn_new_sprite(&self) -> Result<*mut ffi::Sprite, String> {
+        let sprite_data_result = sprite_creator::get_new_sprite_data();
+        match sprite_data_result {
+            Ok(sprite_data) => Ok(spawn_sprite!(
+                sprite_data.x,
+                sprite_data.y,
+                sprite_data.width,
+                sprite_data.height,
+                sprite_data.r,
+                sprite_data.b,
+                sprite_data.b
+            )),
+            Err(_) => Err(String::from("Error creating new sprite")),
         }
     }
 
     pub fn game_loop_start(&mut self) {
-        self.update_pos();
-        move_sprite!(self.sprite, self.sprite_pos.x, self.sprite_pos.y, true);
+        rust_clear_screen();
+        let new_sprite = self.spawn_new_sprite();
+        match new_sprite {
+            Ok(sprite) => {
+                let sprite = Sprite { c_sprite: sprite };
+                self.sprites.push(sprite);
+            }
+            Err(_) => {
+                println!("Error spawning sprite");
+            }
+        }
+        for sprite_ref in &self.sprites {
+            rust_render_sprite(sprite_ref.c_sprite);
+        }
     }
 
     pub fn game_loop_end(&mut self) -> bool {
