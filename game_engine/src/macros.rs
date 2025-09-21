@@ -41,15 +41,15 @@ macro_rules! on_key_press {
 
 #[macro_export]
 macro_rules! start_window_and_game_loop {
-    ($operation_start:expr, $operation_end:expr) => {
+    ($operation_start:block, $operation_end:block) => {
         ffi::rust_create_game_window("Test game", 800, 600);
         while !ffi::rust_window_should_close() {
-            $operation_start();
+            $operation_start;
             tick!();
-            $operation_end();
+            $operation_end;
         }
     };
-    ($game_name:expr, $width:expr, $height:expr, $operation_start:expr, $operation_end:expr) => {
+    ($game_name:expr, $width:expr, $height:expr, $operation_start:block, $operation_end:block) => {
         ffi::rust_create_game_window($game_name, $width, $height);
         let run = true;
 
@@ -57,16 +57,6 @@ macro_rules! start_window_and_game_loop {
             $operation_start();            
             tick!();
             $operation_end();
-        }
-    };
-    ($game:expr) => {
-        ffi::rust_create_game_window("Test game", 800, 600);
-        let mut run = true;
-
-        while run && !ffi::rust_window_should_close() {
-            $game.game_loop_start();
-            tick!();
-            run = $game.game_loop_end();
         }
     };
 }

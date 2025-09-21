@@ -10,17 +10,17 @@ mod tests {
     #[test]
     #[ignore]
     fn test_simple_game_loop() {
-        start_window_and_game_loop!(|| {}, || {});
+        start_window_and_game_loop!({}, {});
     }
 
     #[test]
     #[ignore]
     fn test_sprite_rendering() {
         start_window_and_game_loop!(
-            || {
+            {
                 spawn_sprite!(100.0, 100.0, 100, 100, 255, 0, 0);
             },
-            || {}
+            {}
         );
     }
 
@@ -34,7 +34,7 @@ mod tests {
         let mut window_cleared = false;
 
         start_window_and_game_loop!(
-            || {
+            {
                 let elapsed = start.elapsed();
                 let cond = elapsed < Duration::from_secs(2);
 
@@ -50,7 +50,7 @@ mod tests {
                     tick!();
                 }
             },
-            || {}
+            {}
         );
     }
 
@@ -114,7 +114,17 @@ mod tests {
 
         let mut game = Game::new();
 
-        start_window_and_game_loop!(game);
+        start_window_and_game_loop!(
+            {
+                game.game_loop_start();
+            },
+            {
+                let run = game.game_loop_end();
+                if !run {
+                    break;
+                }
+            }
+        );
     }
 
     #[test]
@@ -136,12 +146,12 @@ mod tests {
             "My game",
             500,
             500,
-            || {
+            {
                 (x, y) = move_pos(x, y);
 
                 move_sprite!(sprite1, x, y, true);
             },
-            || {}
+            {}
         );
     }
 }
