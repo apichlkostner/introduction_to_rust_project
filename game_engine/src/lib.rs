@@ -10,7 +10,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_simple_game_loop() {
-        start_window_and_game_loop!({},{}, {});
+        start_window_and_game_loop!({}, {}, {});
     }
 
     #[test]
@@ -81,7 +81,7 @@ mod tests {
             fn check_key_pressed(&mut self) -> bool {
                 let mut result = false;
                 for (key, pressed) in self.keys_pressed.iter_mut() {
-                    on_key_press!(ffi::rust_get_window(), *key, || {
+                    on_key_press!(ffi::rust_get_window(), *key, {
                         *pressed = true;
                         result = true;
                     });

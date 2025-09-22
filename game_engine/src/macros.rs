@@ -10,14 +10,14 @@ macro_rules! spawn_sprite {
 #[macro_export]
 macro_rules! move_sprite {
     ($sprite:expr, $x:expr, $y:expr) => {
-        ffi::rust_update_sprite_position($sprite, $x, $x);
+        ffi::rust_update_sprite_position($sprite, $x, $y);
         ffi::rust_render_sprite($sprite);
     };
     ($sprite:expr, $x:expr, $y:expr, $clear:expr) => {
         if $clear {
             ffi::rust_clear_screen();
         }
-        ffi::rust_update_sprite_position($sprite, $x, $x);
+        ffi::rust_update_sprite_position($sprite, $x, $y);
         ffi::rust_render_sprite($sprite);
     };
 }
@@ -26,7 +26,7 @@ macro_rules! move_sprite {
 macro_rules! tick {
     () => {
         ffi::rust_update_game_window();
-        std::thread::sleep(std::time::Duration::from_millis(20));
+        std::thread::sleep(std::time::Duration::from_millis(16));
     };
 }
 
