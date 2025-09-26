@@ -1,10 +1,10 @@
 use crate::sprite_creator;
 use crate::sprite_data::SpriteData;
-use crossbeam_channel::{select, unbounded};
+use crossbeam_channel::{unbounded};
 use game_engine::*;
-use log::{info, warn};
-use std::thread;
-use std::time::{Duration, Instant};
+use log::{info, warn, error};
+use std::thread::{self, JoinHandle};
+use std::time::{Instant};
 
 pub struct Sprite {
     c_sprite: *mut ffi::Sprite,
@@ -18,6 +18,7 @@ pub struct Game {
     dt: u128,
     rx: Option<crossbeam_channel::Receiver<SpriteData>>,
     tx: Option<crossbeam_channel::Sender<()>>,
+    handles: Vec<JoinHandle<()>>,
 }
 
 impl Game {
@@ -28,6 +29,7 @@ impl Game {
             dt: 20,
             rx: None,
             tx: None,
+            handles: Vec::new(),
         }
     }
 
@@ -40,13 +42,19 @@ impl Game {
         let (tx, rx) = unbounded();
         self.rx = Some(rx);
 
-        thread::spawn(move || {
+        let handle = thread::spawn(move || {
             loop {
+                if let Ok(_received) = rx_term.try_recv() {
+                    return;
+                }
                 let sprite_data_result = sprite_creator::get_new_sprite_data();
                 match sprite_data_result {
                     Ok(sprite_data) => {
                         info!("Sprite successfully created");
-                        tx.send(sprite_data).unwrap();
+                        match &tx.send(sprite_data){
+                            Ok(_val) => {},
+                            Err(err) => {error!("Could not send sprite data {err}");}
+                        }
                     }
                     Err(err) => {
                         warn!("Error loading new sprite_data: {err}");
@@ -54,6 +62,8 @@ impl Game {
                 }
             }
         });
+        self.handles.push(handle);
+
         self.last_time = Instant::now();
 
         let sprite_ptr = spawn_sprite!(100.0, 100.0, 100, 100, 255, 0, 0);
@@ -148,7 +158,23 @@ impl Game {
         }
     }
 
-    pub fn quit(&mut self) -> bool {
+    pub fn quit(self) -> bool {
+        
+
+        match &self.tx {
+            Some(tx) => {
+                match &tx.send(()) {
+                    Ok(_) => {info!("Send terminate message to child thread.");}
+                    Err(error) => {error!("Could not send terminate message to child thread: {error}");}
+                }},
+            None => {
+                warn!("No sender active");
+            }
+        }
+
+        for handle in self.handles {
+            handle.join().expect("Thread panicked");
+        }
         true
     }
 }
