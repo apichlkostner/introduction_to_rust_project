@@ -12,7 +12,6 @@ use std::time::Instant;
 pub struct Game {
     world: World,
     last_time: Instant,
-    dt: u128,
     rx: Option<crossbeam_channel::Receiver<SpriteData>>,
     tx: Option<crossbeam_channel::Sender<()>>,
     handles: Vec<JoinHandle<()>>,
@@ -23,7 +22,6 @@ impl Game {
         Self {
             world: World::empty(),
             last_time: Instant::now(),
-            dt: 20,
             rx: None,
             tx: None,
             handles: Vec::new(),
@@ -63,8 +61,9 @@ impl Game {
         });
 
         self.handles.push(handle);
-        self.last_time = Instant::now();        
-        self.world.set_player_sprite(100.0, 100.0, 100, 100, 255, 0, 0);
+        self.last_time = Instant::now();
+        self.world
+            .set_player_sprite(100.0, 100.0, 100, 100, 255, 0, 0);
     }
 
     fn receive_new_sprites(&mut self) {
@@ -88,16 +87,20 @@ impl Game {
         }
     }
 
+    fn calc_dt(&mut self) -> f32 {
+        let dt = self.last_time.elapsed().as_millis();
+
+        self.last_time = Instant::now();
+
+        if dt > 2 { dt as f32 } else { 2.0 }
+    }
+
     pub fn game_loop(&mut self) {
         rust_clear_screen();
 
-        self.dt = self.last_time.elapsed().as_millis();
-        if self.dt < 2 {
-            self.dt = 2;
-        }
-        self.last_time = Instant::now();
+        let dt = self.calc_dt();
 
-        control::process_input(&mut self.world, self.dt as f32);
+        control::process_input(&mut self.world, dt);
 
         self.receive_new_sprites();
 
