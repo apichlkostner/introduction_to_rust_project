@@ -1,15 +1,13 @@
-use crate::control::process_input;
+use crate::control;
 use crate::sprite_creator;
 use crate::sprite_data::SpriteData;
-use crate::sprite::Sprite;
+use crate::view;
 use crate::world::World;
-use crossbeam_channel::{unbounded};
+use crossbeam_channel::unbounded;
 use game_engine::*;
-use log::{info, warn, error};
+use log::{error, info, warn};
 use std::thread::{self, JoinHandle};
-use std::time::{Instant};
-
-
+use std::time::Instant;
 
 pub struct Game {
     world: World,
@@ -50,9 +48,11 @@ impl Game {
                 match sprite_data_result {
                     Ok(sprite_data) => {
                         info!("Sprite successfully created");
-                        match &tx.send(sprite_data){
-                            Ok(_val) => {},
-                            Err(err) => {error!("Could not send sprite data {err}");}
+                        match &tx.send(sprite_data) {
+                            Ok(_val) => {}
+                            Err(err) => {
+                                error!("Could not send sprite data {err}");
+                            }
                         }
                     }
                     Err(err) => {
@@ -61,30 +61,17 @@ impl Game {
                 }
             }
         });
-        self.handles.push(handle);
 
-        self.last_time = Instant::now();
-        let sprite = Sprite::new(100.0, 100.0, 100, 100, 255, 0, 0);
-        self.world.player_sprite = sprite;
+        self.handles.push(handle);
+        self.last_time = Instant::now();        
+        self.world.set_player_sprite(100.0, 100.0, 100, 100, 255, 0, 0);
     }
 
-    pub fn game_loop(&mut self) {
-        rust_clear_screen();
-
-        self.dt = self.last_time.elapsed().as_millis();
-        // let dt = self.dt;
-        // info!("dt = {dt}");
-        if self.dt < 2 {
-            self.dt = 2;
-        }
-        self.last_time = Instant::now();
-
-        process_input(&mut self.world, self.dt as f32);
-
+    fn receive_new_sprites(&mut self) {
         match &self.rx {
             Some(rx) => {
                 if let Ok(received) = rx.try_recv() {
-                    let sprite = Sprite::new(
+                    self.world.add_sprite(
                         received.x,
                         received.y,
                         received.width,
@@ -93,29 +80,40 @@ impl Game {
                         received.g,
                         received.b,
                     );
-                    self.world.sprites.push(sprite);
                 }
             }
             None => {
                 warn!("No receiver active");
             }
         }
+    }
 
-        rust_render_sprite(self.world.player_sprite.get_c_sprite());
-        for sprite_ref in &self.world.sprites {
-            rust_render_sprite(sprite_ref.get_c_sprite());
+    pub fn game_loop(&mut self) {
+        rust_clear_screen();
+
+        self.dt = self.last_time.elapsed().as_millis();
+        if self.dt < 2 {
+            self.dt = 2;
         }
+        self.last_time = Instant::now();
+
+        control::process_input(&mut self.world, self.dt as f32);
+
+        self.receive_new_sprites();
+
+        view::render(&self.world);
     }
 
     pub fn quit(self) -> bool {
-        
-
         match &self.tx {
-            Some(tx) => {
-                match &tx.send(()) {
-                    Ok(_) => {info!("Send terminate message to child thread.");}
-                    Err(error) => {error!("Could not send terminate message to child thread: {error}");}
-                }},
+            Some(tx) => match &tx.send(()) {
+                Ok(_) => {
+                    info!("Send terminate message to child thread.");
+                }
+                Err(error) => {
+                    error!("Could not send terminate message to child thread: {error}");
+                }
+            },
             None => {
                 warn!("No sender active");
             }
