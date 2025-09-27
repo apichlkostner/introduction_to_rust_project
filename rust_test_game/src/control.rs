@@ -1,6 +1,12 @@
 use game_engine::*;
 use crate::world::World;
 
+/// Processes keyboard input and moves the player sprite accordingly.
+///
+/// # Arguments
+///
+/// * `world` - A mutable reference to the game world.
+/// * `dt` - The delta time since the last frame, used to scale movement speed.
 pub fn process_input(world: &mut World, dt: f32) {
         let speed = 0.1;
         let dist = speed * dt;

@@ -1,5 +1,6 @@
-
-
+/// Initializes the logger using the `fern` crate with a custom format.
+/// 
+/// Logs are written to both stdout and a file named `output.log`.
 pub fn init_logger() {
     fern::Dispatch::new()
         .format(|out, message, record| {

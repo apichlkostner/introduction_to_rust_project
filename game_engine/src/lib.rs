@@ -1,3 +1,9 @@
+//! Game engine Rust interface.
+//!
+//! This library provides Rust bindings and utilities for interacting with the underlying
+//! C-based game engine. It exposes FFI bindings, macros for game loop management, and
+//! test cases demonstrating usage.
+
 pub mod ffi;
 pub use ffi::*;
 #[macro_use]
@@ -7,12 +13,14 @@ pub mod macros;
 mod tests {
     use super::*;
 
+    /// Test: Simple game loop.
     #[test]
     #[ignore]
     fn test_simple_game_loop() {
         start_window_and_game_loop!({}, {}, {});
     }
 
+    /// Test: Sprite rendering.
     #[test]
     #[ignore]
     fn test_sprite_rendering() {
@@ -25,6 +33,7 @@ mod tests {
         );
     }
 
+    /// Test: Screen clearing and sprite switching.
     #[test]
     #[ignore]
     fn test_screen_clearing() {
@@ -56,6 +65,7 @@ mod tests {
         );
     }
 
+    /// Test: Key press handling.
     #[test]
     #[ignore]
     fn test_key_presses() {
@@ -129,6 +139,7 @@ mod tests {
         );
     }
 
+    /// Test: Sprite position update.
     #[test]
     #[ignore]
     fn test_sprite_position_update() {

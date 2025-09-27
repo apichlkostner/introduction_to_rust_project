@@ -1,6 +1,12 @@
 use crate::sprite_data::SpriteData;
 use reqwest;
 
+/// Fetches new sprite data from a remote API and parses it into a `SpriteData` struct.
+///
+/// # Returns
+///
+/// * `Ok(SpriteData)` if the sprite data is successfully fetched and parsed.
+/// * `Err(String)` if there is an error during the fetch or parse process.
 pub fn get_new_sprite_data() -> Result<SpriteData, String> {
     let body = reqwest::blocking::get(
         "https://get-random-sprite-data-dan-chiarlones-projects.vercel.app/api/handler",
@@ -14,7 +20,7 @@ pub fn get_new_sprite_data() -> Result<SpriteData, String> {
                     let sd = SpriteData::from_json_string(&json_string);
                     match sd {
                         Ok(sprite_data) => Ok(sprite_data),
-                        Err(_) => Err(String::from("Error parsing sprite data"))
+                        Err(_) => Err(String::from("Error parsing sprite data")),
                     }
                 }
                 Err(_) => Err(String::from("Error parsing json string")),
@@ -28,6 +34,7 @@ pub fn get_new_sprite_data() -> Result<SpriteData, String> {
 mod tests {
     use crate::sprite_creator;
 
+    /// Integration test for creating a sprite from remote data.
     #[test]
     #[ignore]
     fn create_sprite() {

@@ -1,0 +1,48 @@
+
+@startuml
+title Dynamic Diagram: rust_test_game Main Loop and Interactions
+
+actor User
+participant "main()" as Main
+participant "Game" as Game
+participant "World" as World
+participant "control::process_input" as Control
+participant "view::render" as View
+participant "sprite_creator (thread)" as SpriteCreator
+participant "Sprite" as Sprite
+participant "OpenGL library" as CLibrary
+
+== Game Initialization ==
+User -> Main: start program
+Main -> Game: Game::new()
+Main -> Game: game.init()
+Game -> SpriteCreator: spawn thread for get_new_sprite_data()
+Game -> World: set_player_sprite(...)
+
+== Main Game Loop ==
+Main -> Game: game.game_loop() (loop)
+Game -> Game: calc_dt()
+Game -> Control: process_input(&mut World, dt)
+Control -> World: move_player(...)
+Game -> Game: receive_new_sprites()
+SpriteCreator -> Game: send SpriteData (via channel)
+Game -> World: add_sprite(...)
+Game -> View: render(&World)
+View -> World: get_player_sprite()
+View -> Sprite: get_c_sprite()
+View -> CLibrary: rust_render_sprite()
+View -> World: get_sprites()
+View -> Sprite: get_c_sprite() (for each sprite)
+View -> CLibrary: rust_render_sprite()
+
+== Game Quit ==
+Main -> Game: game.quit()
+Game -> SpriteCreator: send terminate signal (via channel)
+Game -> SpriteCreator: join thread
+
+note right of SpriteCreator
+SpriteCreator thread fetches new SpriteData
+from remote API and sends to Game
+end note
+
+@enduml

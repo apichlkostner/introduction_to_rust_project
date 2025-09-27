@@ -9,6 +9,7 @@ use log::{error, info, warn};
 use std::thread::{self, JoinHandle};
 use std::time::Instant;
 
+/// Main game structure holding the world, timing, communication channels, and thread handles.
 pub struct Game {
     world: World,
     last_time: Instant,
@@ -18,6 +19,7 @@ pub struct Game {
 }
 
 impl Game {
+    /// Creates a new `Game` instance with an empty world and initializes timing and channels.
     pub fn new() -> Self {
         Self {
             world: World::empty(),
@@ -28,6 +30,7 @@ impl Game {
         }
     }
 
+    /// Initializes the game, sets up threads for sprite creation, and sets the initial player sprite.
     pub fn init(&mut self) {
         info!("Init game threads");
 
@@ -66,6 +69,7 @@ impl Game {
             .set_player_sprite(100.0, 100.0, 100, 100, 255, 0, 0);
     }
 
+    /// Receives new sprites from the background thread and adds them to the world.
     fn receive_new_sprites(&mut self) {
         match &self.rx {
             Some(rx) => {
@@ -87,6 +91,7 @@ impl Game {
         }
     }
 
+    /// Calculates the delta time (dt) since the last frame in milliseconds.
     fn calc_dt(&mut self) -> f32 {
         let dt = self.last_time.elapsed().as_millis();
 
@@ -95,6 +100,7 @@ impl Game {
         if dt > 2 { dt as f32 } else { 2.0 }
     }
 
+    /// Main game loop: clears the screen, processes input, receives new sprites, and renders the world.
     pub fn game_loop(&mut self) {
         rust_clear_screen();
 
@@ -107,6 +113,11 @@ impl Game {
         view::render(&self.world);
     }
 
+    /// Cleans up the game, sends termination signals to threads, and waits for them to finish.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if cleanup was successful.
     pub fn quit(self) -> bool {
         match &self.tx {
             Some(tx) => match &tx.send(()) {

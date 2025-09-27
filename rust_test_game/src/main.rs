@@ -1,3 +1,7 @@
+//! Entry point for the Rust test game.
+//!
+//! Initializes logging, creates the game instance, and starts the game loop.
+
 mod control;
 mod game;
 mod logging;
@@ -12,6 +16,7 @@ use game_engine::*;
 
 use log::info;
 
+/// Main function that sets up and runs the game.
 fn main() {
     logging::init_logger();
     info!("Starting rust_test_game");
