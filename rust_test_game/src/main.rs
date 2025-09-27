@@ -1,3 +1,4 @@
+mod control;
 mod game;
 mod sprite;
 mod sprite_creator;

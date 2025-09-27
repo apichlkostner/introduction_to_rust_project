@@ -1,3 +1,4 @@
+use crate::control::process_input;
 use crate::sprite_creator;
 use crate::sprite_data::SpriteData;
 use crate::sprite::Sprite;
@@ -67,43 +68,6 @@ impl Game {
         self.world.player_sprite = sprite;
     }
 
-
-    fn process_input(&mut self) {
-        let sprite = &mut self.world.player_sprite;
-        let dt = self.dt as f32;
-        let speed = 0.1;
-        let delta_pos = speed * dt;
-
-        on_key_press!(ffi::rust_get_window(), ffi::GLFW_KEY_RIGHT, {
-            sprite.x += delta_pos;
-            let x = sprite.x;
-            let y = sprite.y;
-            info!("Move down {delta_pos} pixels to ({x}, {y})");
-            move_sprite!(sprite.get_c_sprite(), sprite.x, sprite.y);
-        });
-        on_key_press!(ffi::rust_get_window(), ffi::GLFW_KEY_LEFT, {
-            sprite.x -= delta_pos;
-            let x = sprite.x;
-            let y = sprite.y;
-            info!("Move down {delta_pos} pixels to ({x}, {y})");
-            move_sprite!(sprite.get_c_sprite(), sprite.x, sprite.y);
-        });
-        on_key_press!(ffi::rust_get_window(), ffi::GLFW_KEY_UP, {
-            sprite.y -= delta_pos;
-            let x = sprite.x;
-            let y = sprite.y;
-            info!("Move down {delta_pos} pixels to ({x}, {y})");
-            move_sprite!(sprite.get_c_sprite(), sprite.x, sprite.y);
-        });
-        on_key_press!(ffi::rust_get_window(), ffi::GLFW_KEY_DOWN, {
-            sprite.y += delta_pos;
-            let x = sprite.x;
-            let y = sprite.y;
-            info!("Move down {delta_pos} pixels to ({x}, {y})");
-            move_sprite!(sprite.get_c_sprite(), sprite.x, sprite.y);
-        });
-    }
-
     pub fn game_loop(&mut self) {
         rust_clear_screen();
 
@@ -115,7 +79,7 @@ impl Game {
         }
         self.last_time = Instant::now();
 
-        self.process_input();
+        process_input(&mut self.world, self.dt as f32);
 
         match &self.rx {
             Some(rx) => {
