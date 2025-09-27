@@ -1,19 +1,17 @@
 use crate::sprite_creator;
 use crate::sprite_data::SpriteData;
+use crate::sprite::Sprite;
+use crate::world::World;
 use crossbeam_channel::{unbounded};
 use game_engine::*;
 use log::{info, warn, error};
 use std::thread::{self, JoinHandle};
 use std::time::{Instant};
 
-pub struct Sprite {
-    c_sprite: *mut ffi::Sprite,
-    x: f32,
-    y: f32,
-}
+
 
 pub struct Game {
-    sprites: Vec<Sprite>,
+    world: World,
     last_time: Instant,
     dt: u128,
     rx: Option<crossbeam_channel::Receiver<SpriteData>>,
@@ -24,7 +22,7 @@ pub struct Game {
 impl Game {
     pub fn new() -> Self {
         Self {
-            sprites: Vec::new(),
+            world: World::empty(),
             last_time: Instant::now(),
             dt: 20,
             rx: None,
@@ -65,30 +63,13 @@ impl Game {
         self.handles.push(handle);
 
         self.last_time = Instant::now();
-
-        let sprite_ptr = spawn_sprite!(100.0, 100.0, 100, 100, 255, 0, 0);
-        let sprite = Sprite {
-            c_sprite: sprite_ptr,
-            x: 100.0,
-            y: 100.0,
-        };
-        self.sprites.push(sprite);
+        let sprite = Sprite::new(100.0, 100.0, 100, 100, 255, 0, 0);
+        self.world.player_sprite = sprite;
     }
 
-    fn create_sprite_ptr(&self, sprite_data: &SpriteData) -> *mut ffi::Sprite {
-        spawn_sprite!(
-            sprite_data.x,
-            sprite_data.y,
-            sprite_data.width,
-            sprite_data.height,
-            sprite_data.r,
-            sprite_data.b,
-            sprite_data.b
-        )
-    }
 
     fn process_input(&mut self) {
-        let sprite = &mut self.sprites[0];
+        let sprite = &mut self.world.player_sprite;
         let dt = self.dt as f32;
         let speed = 0.1;
         let delta_pos = speed * dt;
@@ -98,28 +79,28 @@ impl Game {
             let x = sprite.x;
             let y = sprite.y;
             info!("Move down {delta_pos} pixels to ({x}, {y})");
-            move_sprite!(sprite.c_sprite, sprite.x, sprite.y);
+            move_sprite!(sprite.get_c_sprite(), sprite.x, sprite.y);
         });
         on_key_press!(ffi::rust_get_window(), ffi::GLFW_KEY_LEFT, {
             sprite.x -= delta_pos;
             let x = sprite.x;
             let y = sprite.y;
             info!("Move down {delta_pos} pixels to ({x}, {y})");
-            move_sprite!(sprite.c_sprite, sprite.x, sprite.y);
+            move_sprite!(sprite.get_c_sprite(), sprite.x, sprite.y);
         });
         on_key_press!(ffi::rust_get_window(), ffi::GLFW_KEY_UP, {
             sprite.y -= delta_pos;
             let x = sprite.x;
             let y = sprite.y;
             info!("Move down {delta_pos} pixels to ({x}, {y})");
-            move_sprite!(sprite.c_sprite, sprite.x, sprite.y);
+            move_sprite!(sprite.get_c_sprite(), sprite.x, sprite.y);
         });
         on_key_press!(ffi::rust_get_window(), ffi::GLFW_KEY_DOWN, {
             sprite.y += delta_pos;
             let x = sprite.x;
             let y = sprite.y;
             info!("Move down {delta_pos} pixels to ({x}, {y})");
-            move_sprite!(sprite.c_sprite, sprite.x, sprite.y);
+            move_sprite!(sprite.get_c_sprite(), sprite.x, sprite.y);
         });
     }
 
@@ -139,13 +120,16 @@ impl Game {
         match &self.rx {
             Some(rx) => {
                 if let Ok(received) = rx.try_recv() {
-                    let sprite_ptr = self.create_sprite_ptr(&received);
-                    let sprite = Sprite {
-                        c_sprite: sprite_ptr,
-                        x: received.x,
-                        y: received.y,
-                    };
-                    self.sprites.push(sprite);
+                    let sprite = Sprite::new(
+                        received.x,
+                        received.y,
+                        received.width,
+                        received.height,
+                        received.r,
+                        received.g,
+                        received.b,
+                    );
+                    self.world.sprites.push(sprite);
                 }
             }
             None => {
@@ -153,8 +137,9 @@ impl Game {
             }
         }
 
-        for sprite_ref in &self.sprites {
-            rust_render_sprite(sprite_ref.c_sprite);
+        rust_render_sprite(self.world.player_sprite.get_c_sprite());
+        for sprite_ref in &self.world.sprites {
+            rust_render_sprite(sprite_ref.get_c_sprite());
         }
     }
 

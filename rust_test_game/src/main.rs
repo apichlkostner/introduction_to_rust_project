@@ -1,6 +1,8 @@
 mod game;
+mod sprite;
 mod sprite_creator;
 mod sprite_data;
+mod world;
 
 use game::*;
 use game_engine::*;
