@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "game_engine",
+    "rust_test_game",
+    "pong"
+]

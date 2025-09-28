@@ -15,3 +15,7 @@ Thumbs.db
 
 # C library build output
 c_output
+
+# Cargo generated files
+Cargo.lock
+/target/

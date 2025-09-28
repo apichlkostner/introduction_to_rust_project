@@ -52,6 +52,6 @@ impl World {
 
     /// Moves the player sprite by the given delta values.
     pub fn move_player(&mut self, dx: f32, dy: f32) {
-        self.player_sprite.move_pos(dx, dy);
+        self.player_sprite.move_pos(Pos{x: dx, y:dy});
     }
 }
