@@ -1,6 +1,7 @@
-use crate::control;
+use crate::input;
 use crate::sprite_creator;
 use crate::sprite_data::SpriteData;
+use crate::sprite::{Pos, Size, Color};
 use crate::view;
 use crate::world::World;
 use crossbeam_channel::unbounded;
@@ -65,8 +66,13 @@ impl Game {
 
         self.handles.push(handle);
         self.last_time = Instant::now();
-        self.world
-            .set_player_sprite(100.0, 100.0, 100, 100, 255, 0, 0);
+
+        // ✅ Updated: use Pos, Size, Color
+        self.world.set_player_sprite(
+            Pos { x: 100.0, y: 100.0 },
+            Size { width: 100, height: 100 },
+            Color { r: 255, g: 0, b: 0 },
+        );
     }
 
     /// Receives new sprites from the background thread and adds them to the world.
@@ -75,13 +81,16 @@ impl Game {
             Some(rx) => {
                 if let Ok(received) = rx.try_recv() {
                     self.world.add_sprite(
-                        received.x,
-                        received.y,
-                        received.width,
-                        received.height,
-                        received.r,
-                        received.g,
-                        received.b,
+                        Pos { x: received.x, y: received.y },
+                        Size {
+                            width: received.width,
+                            height: received.height,
+                        },
+                        Color {
+                            r: received.r,
+                            g: received.g,
+                            b: received.b,
+                        },
                     );
                 }
             }
@@ -106,7 +115,7 @@ impl Game {
 
         let dt = self.calc_dt();
 
-        control::process_input(&mut self.world, dt);
+        input::process(&mut self.world, dt);
 
         self.receive_new_sprites();
 

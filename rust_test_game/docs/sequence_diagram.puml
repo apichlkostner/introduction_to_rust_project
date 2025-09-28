@@ -6,7 +6,7 @@ actor User
 participant "main()" as Main
 participant "Game" as Game
 participant "World" as World
-participant "control::process_input" as Control
+participant "input::process" as Control
 participant "view::render" as View
 participant "sprite_creator (thread)" as SpriteCreator
 participant "Sprite" as Sprite

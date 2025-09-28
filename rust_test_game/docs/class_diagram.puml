@@ -1,75 +1,96 @@
 @startuml
-package rust_test_game {
-	class Game {
-		- world: World
-		- last_time: Instant
-		- rx: Option<Receiver<SpriteData>>
-		- tx: Option<Sender<()>>
-		- handles: Vec<JoinHandle<()>>
-		+ new()
-		+ init()
-		+ game_loop()
-		+ quit()
-	}
-
-	class World {
-		- player_sprite: Sprite
-		- sprites: Vec<Sprite>
-		+ empty()
-		+ set_player_sprite(...)
-		+ add_sprite(...)
-		+ get_player_sprite()
-		+ get_sprites()
-		+ move_player(...)
-	}
-
-	class Sprite {
-		- c_sprite: *mut ffi::Sprite
-		+ x: f32
-		+ y: f32
-		+ new(...)
-		+ get_c_sprite()
-		+ move_pos(...)
-	}
-
-	class SpriteData {
-		+ width: i32
-		+ height: i32
-		+ x: f32
-		+ y: f32
-		+ r: i32
-		+ g: i32
-		+ b: i32
-		+ from_json_string(data: &str)
-	}
-
-	class sprite_creator {
-		+ get_new_sprite_data()
-	}
-
-	class control {
-		+ process_input(world: &mut World, dt: f32)
-	}
-
-	class view {
-		+ render(world: &World)
-	}
-
-	class logging {
-		+ init_logger()
-	}
-
-	Game "1" o-- "1" World
-	World "1" o-- "*" Sprite
-	Game "1" o-- "*" JoinHandle
-	Game "1" o-- "1" SpriteData
-	Game ..> control : uses
-	Game ..> view : uses
-	Game ..> sprite_creator : uses
-	Game ..> logging : uses
-	control ..> World
-	view ..> World
-	sprite_creator ..> SpriteData
-	World ..> Sprite
+class Game {
+    - world: World
+    - last_time: Instant
+    - rx: Option<Receiver<SpriteData>>
+    - tx: Option<Sender<()>>
+    - handles: Vec<JoinHandle<()>>
+    + new()
+    + init()
+    ...
 }
+
+class World {
+    - player_sprite: Sprite
+    - sprites: Vec<Sprite>
+    + empty()
+    + set_player_sprite(pos: Pos, size: Size, color: Color)
+    + add_sprite(pos: Pos, size: Size, color: Color)
+    + get_player_sprite(): &Sprite
+    + get_sprites(): &Vec<Sprite>
+    + move_player(dx: f32, dy: f32)
+}
+
+class Sprite {
+    - c_sprite: *mut ffi::Sprite
+    + pos: Pos
+    + speed: Velocity
+    + color: Color
+    + new(pos: Pos, speed: Velocity, color: Color, size: Size)
+    ...
+}
+
+class SpriteData {
+    + width: i32
+    + height: i32
+    + x: f32
+    + y: f32
+    + r: i32
+    + g: i32
+    + b: i32
+    + from_json_string(data: &str): Result<SpriteData>
+}
+
+class Pos {
+    + x: f32
+    + y: f32
+}
+class Size {
+    + width: i32
+    + height: i32
+}
+class Color {
+    + r: i32
+    + g: i32
+    + b: i32
+}
+class Velocity {
+    + dx: f32
+    + dy: f32
+}
+
+package input {
+    class Input {
+        + process_input(world: &mut World, dt: f32)
+        .. gets user input and moves player ..
+    }
+}
+
+package sprite_creator {
+    class SpriteCreator {
+        + get_new_sprite_data(): Result<SpriteData, String>
+        .. fetches new sprite data from server ..
+    }
+}
+
+package view {
+    class View {
+        + render(world: &World)
+        .. renders the world and sprites ..
+    }
+}
+
+Game --> World
+World --> Sprite
+Sprite --> Pos
+Sprite --> Velocity
+Sprite --> Size
+Sprite --> Color
+SpriteData ..> Sprite : used for creation
+Game ..> Input : uses
+Game ..> SpriteCreator : uses
+Game ..> View : uses
+Input ..> World : modifies
+SpriteCreator ..> SpriteData : creates
+View ..> World : renders
 @enduml

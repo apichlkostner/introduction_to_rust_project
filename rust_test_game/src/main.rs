@@ -2,7 +2,7 @@
 //!
 //! Initializes logging, creates the game instance, and starts the game loop.
 
-mod control;
+mod input;
 mod game;
 mod logging;
 mod sprite;
