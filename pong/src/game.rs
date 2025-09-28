@@ -1,7 +1,7 @@
 use crate::ai_player;
 use crate::ball::Ball;
 use crate::input;
-use crate::sprite::{Pos, Size, Color};
+use crate::sprite::{Color, Pos, Size, Velocity};
 use crate::view;
 use crate::world::World;
 use game_engine::*;
@@ -21,7 +21,7 @@ impl Game {
     pub fn new() -> Self {
         Self {
             world: World::empty(),
-            ball: Ball{direction: 0},
+            ball: Ball { direction: 0 },
             last_time: Instant::now(),
             num_sprites: 0,
         }
@@ -34,24 +34,56 @@ impl Game {
         self.last_time = Instant::now();
 
         // ✅ Updated: use Pos, Size, Color
-        self.world.add_sprite("player1",
+        self.world.add_sprite(
+            "player1",
             Pos { x: 20.0, y: 100.0 },
-            Size { width: 30, height: 200 },
-            Color { r: 255, g: 255, b: 255 },
+            Velocity { dx: 0.0, dy: 0.0 },
+            Size {
+                width: 30.0,
+                height: 200.0,
+            },
+            Color {
+                r: 255,
+                g: 255,
+                b: 255,
+            },
         );
-        self.world.add_sprite("player2",
-            Pos { x: 1024.0 - 50.0, y: 200.0 },
-            Size { width: 30, height: 200 },
-            Color { r: 255, g: 255, b: 255 },
+        self.world.add_sprite(
+            "player2",
+            Pos {
+                x: 1024.0 - 50.0,
+                y: 200.0,
+            },
+            Velocity { dx: 0.0, dy: 0.0 },
+            Size {
+                width: 30.0,
+                height: 200.0,
+            },
+            Color {
+                r: 255,
+                g: 255,
+                b: 255,
+            },
         );
 
-        self.world.add_sprite("ball",
-            Pos { x: 1024.0 / 2.0 - 30.0, y: 50.0 },
-            Size { width: 30, height: 30 },
-            Color { r: 255, g: 255, b: 255 },
+        self.world.add_sprite(
+            "ball",
+            Pos {
+                x: 1024.0 / 2.0 - 30.0,
+                y: 50.0,
+            },
+            Velocity { dx: 0.2, dy: 0.2 },
+            Size {
+                width: 30.0,
+                height: 30.0,
+            },
+            Color {
+                r: 255,
+                g: 255,
+                b: 255,
+            },
         );
     }
-
 
     /// Calculates the delta time (dt) since the last frame in milliseconds.
     fn calc_dt(&mut self) -> f32 {
@@ -70,7 +102,10 @@ impl Game {
 
         input::process(&mut self.world, dt);
         ai_player::calc_action(&mut self.world, dt);
-        self.ball.calc_action(&mut self.world, dt);
+        //self.ball.calc_action(&mut self.world, dt);
+
+        self.world.update_sprites(dt);
+        self.world.handle_collisions();
 
         view::render(&self.world);
     }

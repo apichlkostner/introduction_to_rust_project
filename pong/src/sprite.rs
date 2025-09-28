@@ -1,4 +1,5 @@
 use game_engine::*;
+use crate::world::World;
 
 /// Represents an RGB color used to render sprites.
 pub struct Color {
@@ -25,8 +26,8 @@ pub struct Velocity {
 
 /// Represents the size (width and height) of a sprite in pixels.
 pub struct Size {
-    pub width: i32,
-    pub height: i32,
+    pub width: f32,
+    pub height: f32,
 }
 
 /// Represents a game sprite, which is a renderable object in the world..
@@ -34,13 +35,17 @@ pub struct Sprite {
     /// Pointer to the underlying C `Sprite` managed by the engine.
     c_sprite: *mut ffi::Sprite,
 
+    name: String,
+
     /// Current position of the sprite in world space.
     pub pos: Pos,
+
+    pub size: Size,
 
     /// Movement velocity of the sprite.
     /// (Reserved for future updates; not currently used in game loop.)
     #[allow(dead_code)]
-    pub speed: Velocity,
+    pub velocity: Velocity,
 
     /// Color of the sprite.
     /// (Reserved for future updates; not currently used in rendering logic.)
@@ -61,23 +66,25 @@ impl Sprite {
     /// * `speed` - The movement velocity of the sprite (currently unused).
     /// * `color` - The sprite’s color (currently unused, but passed to the engine).
     /// * `size` - The width and height of the sprite.
-    pub fn new(pos: Pos, speed: Velocity, color: Color, size: Size) -> Self {
+    pub fn new(name: &str, pos: Pos, velocity: Velocity, color: Color, size: Size) -> Self {
         // The `spawn_sprite!` macro allocates a C-side sprite
         // and returns a raw pointer. This pointer is stored in
         // `c_sprite` but is ultimately owned by the engine.
         let sprite_ptr = spawn_sprite!(
             pos.x,
             pos.y,
-            size.width,
-            size.height,
+            size.width as i32,
+            size.height as i32,
             color.r,
             color.g,
             color.b
         );
         Self {
             c_sprite: sprite_ptr,
+            name: String::from(name),
             pos,
-            speed,
+            size,
+            velocity,
             color,
         }
     }
@@ -107,7 +114,20 @@ impl Sprite {
         self.pos.y += dy;
 
         // ...then update the engine-side representation
-        // so the sprite is visually moved in the game world.
         move_sprite!(self.get_c_sprite(), self.pos.x, self.pos.y);
+    }
+
+    pub fn update(&mut self, dt: f32) {
+        self.pos.x += dt * self.velocity.dx;
+        self.pos.y += dt * self.velocity.dy;
+
+        move_sprite!(self.get_c_sprite(), self.pos.x, self.pos.y);
+    }
+
+    pub fn intersects(&self, other: &Sprite) -> bool {
+        self.pos.x < other.pos.x + other.size.width &&
+        self.pos.x + self.size.width > other.pos.x &&
+        self.pos.y < other.pos.y + other.size.height &&
+        self.pos.y + self.size.height > other.pos.y
     }
 }

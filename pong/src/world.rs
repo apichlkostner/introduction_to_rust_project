@@ -12,15 +12,25 @@ impl World {
     pub fn empty() -> Self {
         Self {
             sprites: HashMap::new(),
-            window: Size{width: 1024, height: 768},
+            window: Size {
+                width: 1024.0,
+                height: 768.0,
+            },
         }
     }
 
     /// Adds a new sprite
-    pub fn add_sprite(&mut self, name: &str, pos: Pos, size: Size, color: Color) {
+    pub fn add_sprite(
+        &mut self,
+        name: &str,
+        pos: Pos,
+        velocity: Velocity,
+        size: Size,
+        color: Color,
+    ) {
         self.sprites.insert(
             String::from(name),
-            Sprite::new(pos, Velocity { dx: 0.0, dy: 0.0 }, color, size),
+            Sprite::new(name, pos, velocity, color, size),
         );
     }
 
@@ -40,8 +50,76 @@ impl World {
     pub fn get_sprite(&self, name: &str) -> &Sprite {
         &self.sprites[name]
     }
-}
 
+    pub fn check_collision(&self, name: &str) -> Option<&str> {
+        let sprite = &self.sprites["name"];
+        for (name_ref, sprite_ref) in &self.sprites {
+            if name_ref != name {
+                if sprite.intersects(sprite_ref) {
+                    return Some(name_ref);
+                }
+            }
+        }
+        None
+    }
+
+    pub fn update_sprites(&mut self, dt: f32) {
+        for sprite in self.sprites.values_mut() {
+            sprite.update(dt);
+        }
+    }
+
+    pub fn handle_collisions(&mut self) {
+        // collisions with other sprites
+        {
+            let mut collisions = Vec::new();
+
+            for (name, sprite) in &self.sprites {
+                for (name_ref, sprite_ref) in &self.sprites {
+                    if name_ref != name {
+                        if sprite.intersects(sprite_ref) {
+                            collisions.push(String::from(name));
+                        }
+                    }
+                }
+            }
+            for name in collisions.iter() {
+                let sprite_opt = self.sprites.get_mut(name);
+                if let Some(sprite) = sprite_opt {
+                    sprite.velocity.dx = -sprite.velocity.dx;
+                }
+            }
+        }
+
+        // collision with windows borders
+        for (_name, sprite) in &mut self.sprites {
+            let mut collided = false;
+            // Left or right border
+            if sprite.pos.x < 0.0 || sprite.pos.x + sprite.size.width as f32 > self.window.width {
+                sprite.velocity.dx = -sprite.velocity.dx;
+                collided = true;
+            }
+            // Top or bottom border
+            if sprite.pos.y < 0.0 || sprite.pos.y + sprite.size.height as f32 > self.window.height {
+                sprite.velocity.dy = -sprite.velocity.dy;
+                collided = true;
+            }
+            // Optionally, clamp position inside window if needed
+            if collided {
+                sprite.pos.x = sprite
+                    .pos
+                    .x
+                    .max(0.0)
+                    .min(self.window.width - sprite.size.width as f32);
+                sprite.pos.y = sprite
+                    .pos
+                    .y
+                    .max(0.0)
+                    .min(self.window.height - sprite.size.height as f32);
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -63,7 +141,11 @@ mod tests {
             width: 10,
             height: 20,
         };
-        let color = Color { r: 255, g: 128, b: 0 };
+        let color = Color {
+            r: 255,
+            g: 128,
+            b: 0,
+        };
 
         world.add_sprite(name, pos, size, color);
 
@@ -82,8 +164,15 @@ mod tests {
         let mut world = World::empty();
         let name = "player1";
         let pos = Pos { x: 1.0, y: 2.0 };
-        let size = Size { width: 10, height: 20 };
-        let color = Color { r: 255, g: 128, b: 0 };
+        let size = Size {
+            width: 10,
+            height: 20,
+        };
+        let color = Color {
+            r: 255,
+            g: 128,
+            b: 0,
+        };
         world.add_sprite(name, pos, size, color);
 
         let delta = Pos { x: 3.0, y: -1.0 };
@@ -108,7 +197,10 @@ mod tests {
         world.add_sprite(
             "foo",
             Pos { x: 0.0, y: 0.0 },
-            Size { width: 1, height: 1 },
+            Size {
+                width: 1,
+                height: 1,
+            },
             Color { r: 0, g: 0, b: 0 },
         );
         let sprites = world.get_sprites();
