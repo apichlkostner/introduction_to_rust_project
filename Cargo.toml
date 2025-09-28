@@ -1,4 +1,5 @@
 [workspace]
+resolver = "3"
 members = [
     "game_engine",
     "rust_test_game",

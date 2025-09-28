@@ -14,7 +14,10 @@ impl World {
                 Pos { x: 0.0, y: 0.0 },
                 Velocity { dx: 0.0, dy: 0.0 },
                 Color { r: 0, g: 0, b: 0 },
-                Size { width: 0, height: 0 },
+                Size {
+                    width: 0,
+                    height: 0,
+                },
             ),
             sprites: Vec::new(),
         }
@@ -22,22 +25,13 @@ impl World {
 
     /// Sets the player sprite's position, size, and color.
     pub fn set_player_sprite(&mut self, pos: Pos, size: Size, color: Color) {
-        self.player_sprite = Sprite::new(
-            pos,
-            Velocity { dx: 0.0, dy: 0.0 },
-            color,
-            size,
-        );
+        self.player_sprite = Sprite::new(pos, Velocity { dx: 0.0, dy: 0.0 }, color, size);
     }
 
     /// Adds a new sprite to the world with the given position, size, and color.
     pub fn add_sprite(&mut self, pos: Pos, size: Size, color: Color) {
-        self.sprites.push(Sprite::new(
-            pos,
-            Velocity { dx: 0.0, dy: 0.0 },
-            color,
-            size,
-        ));
+        self.sprites
+            .push(Sprite::new(pos, Velocity { dx: 0.0, dy: 0.0 }, color, size));
     }
 
     /// Returns a reference to the player sprite.
@@ -52,6 +46,6 @@ impl World {
 
     /// Moves the player sprite by the given delta values.
     pub fn move_player(&mut self, dx: f32, dy: f32) {
-        self.player_sprite.move_pos(Pos{x: dx, y:dy});
+        self.player_sprite.move_pos(dx, dy);
     }
 }

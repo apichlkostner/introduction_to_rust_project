@@ -1,22 +1,18 @@
+use crate::ai_player;
+use crate::ball::Ball;
 use crate::input;
-use crate::sprite_creator;
-use crate::sprite_data::SpriteData;
 use crate::sprite::{Pos, Size, Color};
 use crate::view;
 use crate::world::World;
-use crossbeam_channel::unbounded;
 use game_engine::*;
 use log::{error, info, warn};
-use std::thread::{self, JoinHandle};
 use std::time::Instant;
 
 /// Main game structure holding the world, timing, communication channels, and thread handles.
 pub struct Game {
     world: World,
+    ball: Ball,
     last_time: Instant,
-    rx: Option<crossbeam_channel::Receiver<SpriteData>>,
-    tx: Option<crossbeam_channel::Sender<()>>,
-    handles: Vec<JoinHandle<()>>,
     num_sprites: i32,
 }
 
@@ -25,10 +21,8 @@ impl Game {
     pub fn new() -> Self {
         Self {
             world: World::empty(),
+            ball: Ball{direction: 0},
             last_time: Instant::now(),
-            rx: None,
-            tx: None,
-            handles: Vec::new(),
             num_sprites: 0,
         }
     }
@@ -37,74 +31,27 @@ impl Game {
     pub fn init(&mut self) {
         info!("Init game threads");
 
-        let (tx_term, rx_term) = unbounded::<()>();
-        self.tx = Some(tx_term);
-
-        let (tx, rx) = unbounded();
-        self.rx = Some(rx);
-
-        let handle = thread::spawn(move || {
-            loop {
-                if let Ok(_received) = rx_term.try_recv() {
-                    return;
-                }
-                let sprite_data_result = sprite_creator::get_new_sprite_data();
-                match sprite_data_result {
-                    Ok(sprite_data) => {
-                        info!("Sprite successfully created");
-                        match &tx.send(sprite_data) {
-                            Ok(_val) => {}
-                            Err(err) => {
-                                error!("Could not send sprite data {err}");
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        warn!("Error loading new sprite_data: {err}");
-                    }
-                }
-            }
-        });
-
-        self.handles.push(handle);
         self.last_time = Instant::now();
 
         // ✅ Updated: use Pos, Size, Color
-        self.world.add_sprite("player",
-            Pos { x: 100.0, y: 100.0 },
-            Size { width: 100, height: 100 },
-            Color { r: 255, g: 0, b: 0 },
+        self.world.add_sprite("player1",
+            Pos { x: 20.0, y: 100.0 },
+            Size { width: 30, height: 200 },
+            Color { r: 255, g: 255, b: 255 },
+        );
+        self.world.add_sprite("player2",
+            Pos { x: 1024.0 - 50.0, y: 200.0 },
+            Size { width: 30, height: 200 },
+            Color { r: 255, g: 255, b: 255 },
+        );
+
+        self.world.add_sprite("ball",
+            Pos { x: 1024.0 / 2.0 - 30.0, y: 50.0 },
+            Size { width: 30, height: 30 },
+            Color { r: 255, g: 255, b: 255 },
         );
     }
 
-    /// Receives new sprites from the background thread and adds them to the world.
-    fn receive_new_sprites(&mut self) {
-        match &self.rx {
-            Some(rx) => {
-                if let Ok(received) = rx.try_recv() {
-                    let num_sprites = self.num_sprites;
-                    let sprite_name = format!("newsprite_{num_sprites}");
-                    info!("Adding sprite {sprite_name}");
-                    self.world.add_sprite(&sprite_name,
-                        Pos { x: received.x, y: received.y },
-                        Size {
-                            width: received.width,
-                            height: received.height,
-                        },
-                        Color {
-                            r: received.r,
-                            g: received.g,
-                            b: received.b,
-                        },
-                    );
-                    self.num_sprites += 1;
-                }
-            }
-            None => {
-                warn!("No receiver active");
-            }
-        }
-    }
 
     /// Calculates the delta time (dt) since the last frame in milliseconds.
     fn calc_dt(&mut self) -> f32 {
@@ -122,8 +69,8 @@ impl Game {
         let dt = self.calc_dt();
 
         input::process(&mut self.world, dt);
-
-        self.receive_new_sprites();
+        ai_player::calc_action(&mut self.world, dt);
+        self.ball.calc_action(&mut self.world, dt);
 
         view::render(&self.world);
     }
@@ -134,23 +81,6 @@ impl Game {
     ///
     /// * `true` if cleanup was successful.
     pub fn quit(self) -> bool {
-        match &self.tx {
-            Some(tx) => match &tx.send(()) {
-                Ok(_) => {
-                    info!("Send terminate message to child thread.");
-                }
-                Err(error) => {
-                    error!("Could not send terminate message to child thread: {error}");
-                }
-            },
-            None => {
-                warn!("No sender active");
-            }
-        }
-
-        for handle in self.handles {
-            handle.join().expect("Thread panicked");
-        }
         true
     }
 }

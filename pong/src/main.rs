@@ -2,12 +2,12 @@
 //!
 //! Initializes logging, creates the game instance, and starts the game loop.
 
+mod ai_player;
+mod ball;
 mod input;
 mod game;
 mod logging;
 mod sprite;
-mod sprite_creator;
-mod sprite_data;
 mod view;
 mod world;
 
@@ -24,7 +24,7 @@ fn main() {
     let mut game = Game::new();
 
     start_window_and_game_loop!(
-        "Test game 1",
+        "Pong",
         1024,
         768,
         {

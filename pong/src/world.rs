@@ -4,6 +4,7 @@ use std::collections::HashMap;
 /// Represents the game world, containing the player sprite and other sprites.
 pub struct World {
     sprites: HashMap<String, Sprite>,
+    pub window: Size,
 }
 
 impl World {
@@ -11,6 +12,7 @@ impl World {
     pub fn empty() -> Self {
         Self {
             sprites: HashMap::new(),
+            window: Size{width: 1024, height: 768},
         }
     }
 
@@ -34,7 +36,12 @@ impl World {
     pub fn get_sprites(&self) -> &HashMap<String, Sprite> {
         &self.sprites
     }
+
+    pub fn get_sprite(&self, name: &str) -> &Sprite {
+        &self.sprites[name]
+    }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -50,7 +57,7 @@ mod tests {
     #[test]
     fn test_add_sprite() {
         let mut world = World::empty();
-        let name = "player";
+        let name = "player1";
         let pos = Pos { x: 1.0, y: 2.0 };
         let size = Size {
             width: 10,
@@ -73,7 +80,7 @@ mod tests {
     #[test]
     fn test_move_sprite() {
         let mut world = World::empty();
-        let name = "player";
+        let name = "player1";
         let pos = Pos { x: 1.0, y: 2.0 };
         let size = Size { width: 10, height: 20 };
         let color = Color { r: 255, g: 128, b: 0 };
