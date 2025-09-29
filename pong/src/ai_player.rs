@@ -1,4 +1,4 @@
-use crate::sprite::{Color, Pos, Size};
+use crate::sprite::Pos;
 use crate::world::World;
 
 pub fn calc_action(world: &mut World, dt: f32) {
@@ -10,20 +10,8 @@ pub fn calc_action(world: &mut World, dt: f32) {
     let delta = speed * dt;
 
     if (middle_ball_pos - middle_pos) > 2.0 * delta {
-        world.move_sprite(
-            "player2",
-            Pos {
-                x: 0.0,
-                y: delta,
-            },
-        );
+        world.move_sprite("player2", Pos { x: 0.0, y: delta });
     } else if (middle_ball_pos - middle_pos) < -2.0 * delta {
-        world.move_sprite(
-            "player2",
-            Pos {
-                x: 0.0,
-                y: -delta,
-            },
-        );
+        world.move_sprite("player2", Pos { x: 0.0, y: -delta });
     }
 }

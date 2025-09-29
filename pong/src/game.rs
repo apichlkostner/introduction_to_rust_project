@@ -1,19 +1,17 @@
 use crate::ai_player;
-use crate::ball::Ball;
 use crate::input;
+use crate::movement;
 use crate::sprite::{Color, Pos, Size, Velocity};
 use crate::view;
 use crate::world::World;
 use game_engine::*;
-use log::{error, info, warn};
+use log::info;
 use std::time::Instant;
 
 /// Main game structure holding the world, timing, communication channels, and thread handles.
 pub struct Game {
     world: World,
-    ball: Ball,
     last_time: Instant,
-    num_sprites: i32,
 }
 
 impl Game {
@@ -21,9 +19,7 @@ impl Game {
     pub fn new() -> Self {
         Self {
             world: World::empty(),
-            ball: Ball { direction: 0 },
             last_time: Instant::now(),
-            num_sprites: 0,
         }
     }
 
@@ -104,8 +100,8 @@ impl Game {
         ai_player::calc_action(&mut self.world, dt);
         //self.ball.calc_action(&mut self.world, dt);
 
-        self.world.update_sprites(dt);
-        self.world.handle_collisions();
+        movement::move_objects(&mut self.world, dt);
+        movement::collision(&mut self.world, dt);
 
         view::render(&self.world);
     }

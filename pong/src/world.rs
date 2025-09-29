@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 /// Represents the game world, containing the player sprite and other sprites.
 pub struct World {
-    sprites: HashMap<String, Sprite>,
+    pub sprites: HashMap<String, Sprite>,
     pub window: Size,
 }
 
@@ -28,10 +28,8 @@ impl World {
         size: Size,
         color: Color,
     ) {
-        self.sprites.insert(
-            String::from(name),
-            Sprite::new(name, pos, velocity, color, size),
-        );
+        self.sprites
+            .insert(String::from(name), Sprite::new(pos, velocity, color, size));
     }
 
     pub fn move_sprite(&mut self, name: &str, delta_pos: Pos) {
@@ -49,75 +47,6 @@ impl World {
 
     pub fn get_sprite(&self, name: &str) -> &Sprite {
         &self.sprites[name]
-    }
-
-    pub fn check_collision(&self, name: &str) -> Option<&str> {
-        let sprite = &self.sprites["name"];
-        for (name_ref, sprite_ref) in &self.sprites {
-            if name_ref != name {
-                if sprite.intersects(sprite_ref) {
-                    return Some(name_ref);
-                }
-            }
-        }
-        None
-    }
-
-    pub fn update_sprites(&mut self, dt: f32) {
-        for sprite in self.sprites.values_mut() {
-            sprite.update(dt);
-        }
-    }
-
-    pub fn handle_collisions(&mut self) {
-        // collisions with other sprites
-        {
-            let mut collisions = Vec::new();
-
-            for (name, sprite) in &self.sprites {
-                for (name_ref, sprite_ref) in &self.sprites {
-                    if name_ref != name {
-                        if sprite.intersects(sprite_ref) {
-                            collisions.push(String::from(name));
-                        }
-                    }
-                }
-            }
-            for name in collisions.iter() {
-                let sprite_opt = self.sprites.get_mut(name);
-                if let Some(sprite) = sprite_opt {
-                    sprite.velocity.dx = -sprite.velocity.dx;
-                }
-            }
-        }
-
-        // collision with windows borders
-        for (_name, sprite) in &mut self.sprites {
-            let mut collided = false;
-            // Left or right border
-            if sprite.pos.x < 0.0 || sprite.pos.x + sprite.size.width as f32 > self.window.width {
-                sprite.velocity.dx = -sprite.velocity.dx;
-                collided = true;
-            }
-            // Top or bottom border
-            if sprite.pos.y < 0.0 || sprite.pos.y + sprite.size.height as f32 > self.window.height {
-                sprite.velocity.dy = -sprite.velocity.dy;
-                collided = true;
-            }
-            // Optionally, clamp position inside window if needed
-            if collided {
-                sprite.pos.x = sprite
-                    .pos
-                    .x
-                    .max(0.0)
-                    .min(self.window.width - sprite.size.width as f32);
-                sprite.pos.y = sprite
-                    .pos
-                    .y
-                    .max(0.0)
-                    .min(self.window.height - sprite.size.height as f32);
-            }
-        }
     }
 }
 

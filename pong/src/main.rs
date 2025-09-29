@@ -3,10 +3,10 @@
 //! Initializes logging, creates the game instance, and starts the game loop.
 
 mod ai_player;
-mod ball;
-mod input;
 mod game;
+mod input;
 mod logging;
+mod movement;
 mod sprite;
 mod view;
 mod world;
@@ -38,4 +38,3 @@ fn main() {
         }
     );
 }
-

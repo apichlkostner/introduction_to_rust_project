@@ -1,5 +1,4 @@
 use game_engine::*;
-use crate::world::World;
 
 /// Represents an RGB color used to render sprites.
 pub struct Color {
@@ -35,8 +34,6 @@ pub struct Sprite {
     /// Pointer to the underlying C `Sprite` managed by the engine.
     c_sprite: *mut ffi::Sprite,
 
-    name: String,
-
     /// Current position of the sprite in world space.
     pub pos: Pos,
 
@@ -66,7 +63,7 @@ impl Sprite {
     /// * `speed` - The movement velocity of the sprite (currently unused).
     /// * `color` - The sprite’s color (currently unused, but passed to the engine).
     /// * `size` - The width and height of the sprite.
-    pub fn new(name: &str, pos: Pos, velocity: Velocity, color: Color, size: Size) -> Self {
+    pub fn new(pos: Pos, velocity: Velocity, color: Color, size: Size) -> Self {
         // The `spawn_sprite!` macro allocates a C-side sprite
         // and returns a raw pointer. This pointer is stored in
         // `c_sprite` but is ultimately owned by the engine.
@@ -81,7 +78,6 @@ impl Sprite {
         );
         Self {
             c_sprite: sprite_ptr,
-            name: String::from(name),
             pos,
             size,
             velocity,
@@ -117,17 +113,7 @@ impl Sprite {
         move_sprite!(self.get_c_sprite(), self.pos.x, self.pos.y);
     }
 
-    pub fn update(&mut self, dt: f32) {
-        self.pos.x += dt * self.velocity.dx;
-        self.pos.y += dt * self.velocity.dy;
-
+    pub fn update_pos(&self) {
         move_sprite!(self.get_c_sprite(), self.pos.x, self.pos.y);
-    }
-
-    pub fn intersects(&self, other: &Sprite) -> bool {
-        self.pos.x < other.pos.x + other.size.width &&
-        self.pos.x + self.size.width > other.pos.x &&
-        self.pos.y < other.pos.y + other.size.height &&
-        self.pos.y + self.size.height > other.pos.y
     }
 }
