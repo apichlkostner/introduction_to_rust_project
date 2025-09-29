@@ -1,3 +1,9 @@
+//! Sprite definitions and logic for Pong.
+//!
+//! This module defines the core data structures for representing sprites (game objects),
+//! including their position, size, velocity, and color. It also provides methods for
+//! creating and manipulating sprites, and synchronizing their state with the game engine.
+
 use game_engine::*;
 
 /// Represents an RGB color used to render sprites.
@@ -29,7 +35,7 @@ pub struct Size {
     pub height: f32,
 }
 
-/// Represents a game sprite, which is a renderable object in the world..
+/// Represents a game sprite, which is a renderable object in the world.
 pub struct Sprite {
     /// Pointer to the underlying C `Sprite` managed by the engine.
     c_sprite: *mut ffi::Sprite,
@@ -53,14 +59,13 @@ pub struct Sprite {
 impl Sprite {
     /// Creates a new sprite and registers it with the game engine.
     ///
-    /// This function spawns a sprite using the provided position, velocity,
-    /// color, and size, and returns a managed `Sprite` wrapper around the
-    /// engine’s underlying `ffi::Sprite` pointer.
+    /// Spawns a sprite using the provided position, velocity, color, and size,
+    /// and returns a managed `Sprite` wrapper around the engine’s underlying `ffi::Sprite` pointer.
     ///
     /// # Arguments
     ///
     /// * `pos` - The initial position of the sprite.
-    /// * `speed` - The movement velocity of the sprite (currently unused).
+    /// * `velocity` - The movement velocity of the sprite (currently unused).
     /// * `color` - The sprite’s color (currently unused, but passed to the engine).
     /// * `size` - The width and height of the sprite.
     pub fn new(pos: Pos, velocity: Velocity, color: Color, size: Size) -> Self {
@@ -106,6 +111,7 @@ impl Sprite {
     /// * `dy` - Change in the y-axis.
     pub fn move_pos(&mut self, dx: f32, dy: f32) {
         // Update the Rust-side position first...
+    
         self.pos.x += dx;
         self.pos.y += dy;
 
@@ -113,6 +119,7 @@ impl Sprite {
         move_sprite!(self.get_c_sprite(), self.pos.x, self.pos.y);
     }
 
+    /// Synchronizes the engine-side sprite position with the Rust-side position.
     pub fn update_pos(&self) {
         move_sprite!(self.get_c_sprite(), self.pos.x, self.pos.y);
     }

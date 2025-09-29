@@ -8,6 +8,7 @@ mod input;
 mod logging;
 mod movement;
 mod sprite;
+mod sound;
 mod view;
 mod world;
 

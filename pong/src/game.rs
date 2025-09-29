@@ -1,6 +1,13 @@
+//! Main game logic for Pong.
+//!
+//! This module defines the `Game` struct, which manages the game world, timing,
+//! sound effects, and the main game loop. It handles initialization, input processing,
+//! AI actions, movement, collision detection, rendering, and cleanup.
+
 use crate::ai_player;
 use crate::input;
 use crate::movement;
+use crate::sound::SoundEffect;
 use crate::sprite::{Color, Pos, Size, Velocity};
 use crate::view;
 use crate::world::World;
@@ -8,22 +15,32 @@ use game_engine::*;
 use log::info;
 use std::time::Instant;
 
-/// Main game structure holding the world, timing, communication channels, and thread handles.
+/// The main game structure, responsible for managing the game state and loop.
+///
+/// Holds the game world, timing information, and sound effects.
 pub struct Game {
     world: World,
     last_time: Instant,
+    sound_effect: SoundEffect,
 }
 
 impl Game {
-    /// Creates a new `Game` instance with an empty world and initializes timing and channels.
+    /// Creates a new `Game` instance with an empty world, initializes timing, and sound effects.
+    ///
+    /// # Returns
+    ///
+    /// A new `Game` object ready for initialization.
     pub fn new() -> Self {
         Self {
             world: World::empty(),
             last_time: Instant::now(),
+            sound_effect: SoundEffect::new(),
         }
     }
 
-    /// Initializes the game, sets up threads for sprite creation, and sets the initial player sprite.
+    /// Initializes the game world and adds the player and ball sprites.
+    ///
+    /// Sets up the initial positions, sizes, velocities, and colors for all sprites.
     pub fn init(&mut self) {
         info!("Init game threads");
 
@@ -81,7 +98,13 @@ impl Game {
         );
     }
 
-    /// Calculates the delta time (dt) since the last frame in milliseconds.
+    /// Calculates the time delta (dt) since the last frame in milliseconds.
+    ///
+    /// Updates the internal timer and returns the elapsed time as a `f32`.
+    ///
+    /// # Returns
+    ///
+    /// The elapsed time in milliseconds since the last frame, as a `f32`.
     fn calc_dt(&mut self) -> f32 {
         let dt = self.last_time.elapsed().as_millis();
 
@@ -90,7 +113,10 @@ impl Game {
         if dt > 2 { dt as f32 } else { 2.0 }
     }
 
-    /// Main game loop: clears the screen, processes input, receives new sprites, and renders the world.
+    /// Runs one iteration of the main game loop.
+    ///
+    /// Clears the screen, processes player input and AI actions, updates movement,
+    /// checks for collisions (playing a sound if detected), and renders the world.
     pub fn game_loop(&mut self) {
         rust_clear_screen();
 
@@ -98,15 +124,17 @@ impl Game {
 
         input::process(&mut self.world, dt);
         ai_player::calc_action(&mut self.world, dt);
-        //self.ball.calc_action(&mut self.world, dt);
 
         movement::move_objects(&mut self.world, dt);
-        movement::collision(&mut self.world, dt);
+        let collision_happened = movement::collision(&mut self.world, dt);
+        if collision_happened {
+            self.sound_effect.beep();
+        }
 
         view::render(&self.world);
     }
 
-    /// Cleans up the game, sends termination signals to threads, and waits for them to finish.
+    /// Cleans up the game and performs any necessary shutdown procedures.
     ///
     /// # Returns
     ///
