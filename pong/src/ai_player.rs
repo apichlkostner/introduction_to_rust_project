@@ -23,10 +23,17 @@ pub fn calc_action(world: &mut World, dt: f32) {
     let middle_pos = myself.pos.y + myself.size.height / 2.0;
     let middle_ball_pos = ball.pos.y + ball.size.height / 2.0;
     let delta = speed * dt;
+    let window_height = world.window.height;
+    let mut new_y = myself.pos.y;
 
-    if (middle_ball_pos - middle_pos) > 2.0 * delta {
-        world.move_sprite("player2", Pos { x: 0.0, y: delta });
-    } else if (middle_ball_pos - middle_pos) < -2.0 * delta {
-        world.move_sprite("player2", Pos { x: 0.0, y: -delta });
+    if (middle_ball_pos - middle_pos).abs() > 2.0 * delta {
+        if middle_ball_pos > middle_pos {
+            new_y += delta;
+        } else {
+            new_y -= delta;
+        }
+        // Clamp the new_y so the paddle stays within the window
+        new_y = new_y.clamp(0.0, window_height - myself.size.height);
+        world.set_sprite_pos("player2", Pos { x: myself.pos.x, y: new_y });
     }
 }

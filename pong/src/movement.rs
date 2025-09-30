@@ -6,6 +6,11 @@
 use crate::sprite::Sprite;
 use crate::world::World;
 
+pub enum CollisionType {
+    WithSprite,
+    WithBorder,
+}
+
 /// Moves all sprites in the world according to their velocities and the time delta.
 ///
 /// # Arguments
@@ -35,14 +40,14 @@ pub fn move_objects(world: &mut World, dt: f32) {
 /// # Returns
 ///
 /// * `true` if any collision occurred, otherwise `false`.
-pub fn collision(world: &mut World, _dt: f32) -> bool {
+pub fn collision(world: &mut World, _dt: f32) -> Option<CollisionType> {
     let mut collisions = Vec::new();
     let mut names: Vec<String> = Vec::new();
     for name in world.sprites.keys().cloned() {
         names.push(name);
     }
 
-    let mut collision_happened = false;
+    let mut collision_happened = None;
 
     for (i, name_a) in names.iter().enumerate() {
         for name_b in &names[i + 1..] {
@@ -50,7 +55,7 @@ pub fn collision(world: &mut World, _dt: f32) -> bool {
             let b = &world.sprites[name_b];
 
             if intersects(a, b) {
-                collision_happened = true;
+                collision_happened = Some(CollisionType::WithSprite);
                 collisions.push((name_a, name_b));
             }
         }
@@ -66,6 +71,7 @@ pub fn collision(world: &mut World, _dt: f32) -> bool {
         }
     }
 
+    // collision with window borders
     for (_name, sprite) in &mut world.sprites {
         let mut collided = false;
         
@@ -82,6 +88,7 @@ pub fn collision(world: &mut World, _dt: f32) -> bool {
         }
 
         if collided {
+            collision_happened = Some(CollisionType::WithBorder);
             sprite.pos.x = sprite
                 .pos
                 .x
@@ -198,7 +205,7 @@ mod tests {
             make_sprite(Pos { x: 5.0, y: 5.0 }, velocity2, size2),
         );
         let collided = collision(&mut world, 0.0);
-        assert!(collided);
+        assert!(matches!(collided, Some(CollisionType::WithSprite)));
     }
 
     #[test]
@@ -214,7 +221,7 @@ mod tests {
         );
         let collided = collision(&mut world, 0.0);
         // currently collision with border is not returned
-        assert!(!collided);
+        assert!(matches!(collided, Some(CollisionType::WithBorder)));
         let sprite = &world.sprites["border"];
         // Should be clamped within window
         assert!(sprite.pos.x <= world.window.width - sprite.size.width);

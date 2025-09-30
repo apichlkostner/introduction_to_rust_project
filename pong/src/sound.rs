@@ -34,9 +34,9 @@ impl SoundEffect {
     }
 
     /// Plays a short beep sound if no other sound is currently playing.
-    pub fn beep(&self) {
+    pub fn beep(&self, freq: f32) {
         if self.sink.empty() {
-            let source = SineWave::new(250.0)
+            let source = SineWave::new(freq)
                 .take_duration(Duration::from_secs_f32(0.15))
                 .amplify(0.20);
             self.sink.append(source);

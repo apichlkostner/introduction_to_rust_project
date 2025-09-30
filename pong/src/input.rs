@@ -11,11 +11,18 @@ use game_engine::*;
 pub fn process(world: &mut World, dt: f32) {
     let speed = 0.3;
     let dist = speed * dt;
+    let window_height = world.window.height;
 
     on_key_press!(ffi::rust_get_window(), ffi::GLFW_KEY_UP, {
-        world.move_sprite("player1", Pos { x: 0.0, y: -dist });
+        let player = world.get_sprite("player1");
+        let mut new_y = player.pos.y - dist;
+        new_y = new_y.clamp(0.0, window_height - player.size.height);
+        world.set_sprite_pos("player1", Pos { x: player.pos.x, y: new_y });
     });
     on_key_press!(ffi::rust_get_window(), ffi::GLFW_KEY_DOWN, {
-        world.move_sprite("player1", Pos { x: 0.0, y: dist });
+        let player = world.get_sprite("player1");
+        let mut new_y = player.pos.y + dist;
+        new_y = new_y.clamp(0.0, window_height - player.size.height);
+        world.set_sprite_pos("player1", Pos { x: player.pos.x, y: new_y });
     });
 }

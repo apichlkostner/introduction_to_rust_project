@@ -7,6 +7,7 @@
 use crate::ai_player;
 use crate::input;
 use crate::movement;
+use crate::movement::CollisionType;
 use crate::sound::SoundEffect;
 use crate::sprite::{Color, Pos, Size, Velocity};
 use crate::view;
@@ -126,9 +127,12 @@ impl Game {
         ai_player::calc_action(&mut self.world, dt);
 
         movement::move_objects(&mut self.world, dt);
-        let collision_happened = movement::collision(&mut self.world, dt);
-        if collision_happened {
-            self.sound_effect.beep();
+        let collision = movement::collision(&mut self.world, dt);
+
+        match collision {
+            Some(CollisionType::WithBorder) => self.sound_effect.beep(220.0),
+            Some(CollisionType::WithSprite) => self.sound_effect.beep(120.0),
+            None => (),
         }
 
         view::render(&self.world);

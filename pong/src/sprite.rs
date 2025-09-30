@@ -100,23 +100,16 @@ impl Sprite {
         self.c_sprite
     }
 
-    /// Moves the sprite by the given delta values (`dx`, `dy`).
-    ///
-    /// Updates both the Rust-side position and the engine-side position
-    /// by invoking the `move_sprite!` macro.
-    ///
-    /// # Arguments
-    ///
-    /// * `dx` - Change in the x-axis.
-    /// * `dy` - Change in the y-axis.
-    pub fn move_pos(&mut self, dx: f32, dy: f32) {
+ 
+    /// Updates the internal position of the sprite and synchronizes it with the engine-side
+    pub fn set_pos(&mut self, pos: &Pos) {
         // Update the Rust-side position first...
     
-        self.pos.x += dx;
-        self.pos.y += dy;
+        self.pos.x = pos.x;
+        self.pos.y = pos.y;
 
         // ...then update the engine-side representation
-        move_sprite!(self.get_c_sprite(), self.pos.x, self.pos.y);
+        self.update_pos();
     }
 
     /// Synchronizes the engine-side sprite position with the Rust-side position.
