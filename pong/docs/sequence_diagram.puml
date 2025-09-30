@@ -1,0 +1,65 @@
+@startuml
+title Pong Game - Sequence Diagram (One Frame)
+
+actor Player
+participant Game
+participant Input
+participant AiPlayer
+participant Movement
+participant SoundEffect
+participant View
+participant World
+
+Player -> Game : game_loop()
+
+activate Game
+Game -> Game : calc_dt() → dt
+
+' --- Input handling
+Game -> Input : process(&mut World, dt)
+activate Input
+Input -> World : get_sprite("player1")
+World --> Input : &Sprite
+Input -> World : set_sprite_pos("player1", new Pos)
+deactivate Input
+
+' --- AI handling
+Game -> AiPlayer : calc_action(&mut World, dt)
+activate AiPlayer
+AiPlayer -> World : get_sprite("player2")
+World --> AiPlayer : &Sprite
+AiPlayer -> World : get_sprite("ball")
+World --> AiPlayer : &Sprite
+AiPlayer -> World : set_sprite_pos("player2", new Pos)
+deactivate AiPlayer
+
+' --- Movement
+Game -> Movement : move_objects(&mut World, dt)
+activate Movement
+Movement -> World : update sprite positions
+deactivate Movement
+
+Game -> Movement : collision(&mut World, dt)
+activate Movement
+Movement -> World : check collisions
+World --> Movement : CollisionType?
+deactivate Movement
+
+' --- Collision sound
+alt CollisionType::WithBorder
+  Game -> SoundEffect : beep(220 Hz)
+else CollisionType::WithSprite
+  Game -> SoundEffect : beep(120 Hz)
+end
+
+' --- Rendering
+Game -> View : render(&World)
+activate View
+View -> World : get_sprites()
+World --> View : HashMap<String, Sprite>
+View -> World : get_c_sprite()
+View -> GameEngine : rust_render_sprite(ptr)
+deactivate View
+
+deactivate Game
+@enduml
